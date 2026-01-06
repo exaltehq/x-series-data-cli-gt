@@ -1,6 +1,7 @@
 """Interactive CLI for X-Series Demo Data Generator."""
 
 import re
+from typing import Any
 
 import click
 from rich.console import Console
@@ -630,6 +631,250 @@ def prompt_next_action() -> str:
         return "exit"
 
 
+# ============================================================================
+# Clone Account Feature
+# ============================================================================
+
+
+def prompt_main_menu() -> str:
+    """Prompt user to choose between Generate and Clone modes.
+
+    Returns:
+        'generate' or 'clone'
+    """
+    console.print()
+    console.print("[bold]What would you like to do?[/bold]\n")
+    console.print("  [1] Generate Demo Data (create random products, customers, sales)")
+    console.print("  [2] Clone Account Data (copy products/customers from another account)")
+    console.print()
+    choice = Prompt.ask("Enter your choice", choices=["1", "2"], default="1")
+
+    return "generate" if choice == "1" else "clone"
+
+
+def prompt_domain_with_label(label: str) -> str:
+    """Prompt for domain prefix with a custom label."""
+    console.print()
+    console.print(f"[bold]{label}[/bold]")
+    console.print("[dim]The domain prefix is the part before .retail.lightspeed.app[/dim]")
+    domain = Prompt.ask("Enter the X-Series domain prefix")
+
+    console.print(f"\nStore URL: [cyan]https://{domain}.retail.lightspeed.app[/cyan]")
+    console.print("[dim]Press Enter to confirm, or type N to re-enter[/dim]")
+    response = Prompt.ask("Confirm?", default="y")
+    if response.lower() == "n":
+        return prompt_domain_with_label(label)
+
+    return domain
+
+
+def prompt_clone_options() -> dict[str, bool]:
+    """Prompt user to select what to clone.
+
+    Returns:
+        Dict with 'products' and 'customers' boolean flags
+    """
+    console.print()
+    console.print("[bold]What would you like to clone?[/bold]\n")
+    console.print("[dim]Select one or more options:[/dim]")
+
+    clone_products = Confirm.ask("  Clone products (with inventory)?", default=True)
+    clone_customers = Confirm.ask("  Clone customers?", default=True)
+
+    if not clone_products and not clone_customers:
+        console.print("[yellow]You must select at least one option to clone.[/yellow]")
+        return prompt_clone_options()
+
+    return {
+        "products": clone_products,
+        "customers": clone_customers,
+    }
+
+
+def show_clone_summary(
+    source_domain: str,
+    source_name: str,
+    dest_domain: str,
+    dest_name: str,
+    options: dict[str, bool],
+) -> bool:
+    """Show clone summary and get confirmation.
+
+    Returns:
+        True if user confirms with 'CLONE'
+    """
+    console.print()
+
+    items = []
+    if options.get("products"):
+        items.append("Products (with inventory)")
+    if options.get("customers"):
+        items.append("Customers")
+
+    items_str = ", ".join(items)
+
+    summary = (
+        f"[bold]Ready to clone account data[/bold]\n\n"
+        f"  Source:      [cyan]{source_name}[/cyan] ({source_domain})\n"
+        f"  Destination: [cyan]{dest_name}[/cyan] ({dest_domain})\n\n"
+        f"  Cloning:     [cyan]{items_str}[/cyan]\n\n"
+        f"  [yellow]Warning: This will create new records in the destination account.[/yellow]\n"
+        f"  [dim]Existing records with duplicate SKUs/emails may fail.[/dim]"
+    )
+    console.print(Panel(summary, border_style="yellow"))
+    console.print()
+    response = Prompt.ask("Type [bold]CLONE[/bold] to start (or press Enter to cancel)")
+    return response.upper() == "CLONE"
+
+
+def show_clone_complete(results: dict[str, Any]) -> None:
+    """Display clone completion summary."""
+    console.print()
+
+    products_cloned = len(results.get("products", []))
+    customers_cloned = len(results.get("customers", []))
+    failed_products = results.get("failed_products", [])
+    failed_customers = results.get("failed_customers", [])
+    inventory_updated = results.get("inventory_updated", 0)
+    inventory_failed = results.get("inventory_failed", 0)
+    output_file = results.get("output_file", "clone-results.json")
+
+    has_failures = failed_products or failed_customers
+
+    # Build summary lines
+    product_line = ""
+    if results.get("products") is not None:
+        inv_info = ""
+        if inventory_updated > 0:
+            inv_info = f" (inventory: {inventory_updated}"
+            if inventory_failed > 0:
+                inv_info += f", {inventory_failed} failed"
+            inv_info += ")"
+        product_line = f"  Products cloned:  [cyan]{products_cloned}[/cyan]{inv_info}\n"
+
+    customer_line = ""
+    if results.get("customers") is not None:
+        customer_line = f"  Customers cloned: [cyan]{customers_cloned}[/cyan]\n"
+
+    failed_line = ""
+    if has_failures:
+        parts = []
+        if failed_products:
+            parts.append(f"{len(failed_products)} products")
+        if failed_customers:
+            parts.append(f"{len(failed_customers)} customers")
+        failed_line = f"\n  [red]Failed: {', '.join(parts)}[/red]"
+
+    border_style = "yellow" if has_failures else "green"
+    status = "[bold yellow]Clone complete (with errors)[/bold yellow]" if has_failures else "[bold green]Clone complete![/bold green]"
+
+    summary = (
+        f"{status}\n\n"
+        f"  Source:           [cyan]{results.get('source_domain')}[/cyan]\n"
+        f"  Destination:      [cyan]{results.get('dest_domain')}[/cyan]\n\n"
+        f"{product_line}"
+        f"{customer_line}\n"
+        f"  Output file: [cyan]{output_file}[/cyan]{failed_line}"
+    )
+    console.print(Panel(summary, border_style=border_style))
+
+    # Show detailed failure reasons if any
+    if failed_products:
+        console.print("\n[bold red]Failed Products:[/bold red]")
+        for item in failed_products[:10]:  # Limit to first 10
+            console.print(f"  • {item.get('sku', 'N/A')}: {item.get('name', 'N/A')}")
+            console.print(f"    [dim]{item.get('reason', 'Unknown error')}[/dim]")
+        if len(failed_products) > 10:
+            console.print(f"  [dim]... and {len(failed_products) - 10} more[/dim]")
+
+    if failed_customers:
+        console.print("\n[bold red]Failed Customers:[/bold red]")
+        for item in failed_customers[:10]:  # Limit to first 10
+            console.print(f"  • {item.get('name', 'N/A')} <{item.get('email', 'N/A')}>")
+            console.print(f"    [dim]{item.get('reason', 'Unknown error')}[/dim]")
+        if len(failed_customers) > 10:
+            console.print(f"  [dim]... and {len(failed_customers) - 10} more[/dim]")
+
+
+def run_clone_wizard(debug: bool = False) -> None:
+    """Run the clone account wizard."""
+    from xseries_demo.api.client import XSeriesClient
+    from xseries_demo.clone import run_clone
+    from xseries_demo.output import write_clone_output_file
+
+    # === SOURCE ACCOUNT ===
+    console.print("\n[bold cyan]━━━ SOURCE ACCOUNT ━━━[/bold cyan]")
+    source_domain = prompt_domain_with_label("Source Account (copy FROM)")
+
+    show_token_instructions(include_sales=False)
+    console.print("[dim]Required scopes: products:read, customers:read[/dim]")
+
+    # Validate source credentials
+    while True:
+        source_token = prompt_token()
+        valid, source_name, _, _ = validate_connection(source_domain, source_token)
+        if valid:
+            break
+        console.print("\n[yellow]Please re-enter your source credentials.[/yellow]")
+        if not Confirm.ask("Try again?", default=True):
+            console.print("\n[yellow]Aborted.[/yellow]")
+            return
+        source_domain = prompt_domain_with_label("Source Account (copy FROM)")
+        show_token_instructions(include_sales=False)
+
+    # === DESTINATION ACCOUNT ===
+    console.print("\n[bold cyan]━━━ DESTINATION ACCOUNT ━━━[/bold cyan]")
+    dest_domain = prompt_domain_with_label("Destination Account (copy TO)")
+
+    show_token_instructions(include_sales=False)
+    console.print("[dim]Required scopes: products:write, customers:write[/dim]")
+
+    # Validate destination credentials
+    while True:
+        dest_token = prompt_token()
+        valid, dest_name, _, _ = validate_connection(dest_domain, dest_token)
+        if valid:
+            break
+        console.print("\n[yellow]Please re-enter your destination credentials.[/yellow]")
+        if not Confirm.ask("Try again?", default=True):
+            console.print("\n[yellow]Aborted.[/yellow]")
+            return
+        dest_domain = prompt_domain_with_label("Destination Account (copy TO)")
+        show_token_instructions(include_sales=False)
+
+    # Check that source and destination are different
+    if source_domain.lower() == dest_domain.lower():
+        console.print("\n[red]Error: Source and destination accounts must be different.[/red]")
+        return
+
+    # === CLONE OPTIONS ===
+    options = prompt_clone_options()
+
+    # === CONFIRMATION ===
+    if not show_clone_summary(source_domain, source_name, dest_domain, dest_name, options):
+        console.print("\n[yellow]Aborted.[/yellow]")
+        return
+
+    # === EXECUTE CLONE ===
+    console.print()
+    with XSeriesClient(source_domain, source_token, debug=debug) as source_client:
+        with XSeriesClient(dest_domain, dest_token, debug=debug) as dest_client:
+            results = run_clone(
+                source_client=source_client,
+                dest_client=dest_client,
+                clone_products_flag=options["products"],
+                clone_customers_flag=options["customers"],
+                include_inventory=options["products"],  # Include inventory if cloning products
+            )
+
+    # Write output file
+    output_file = write_clone_output_file(results)
+    results["output_file"] = output_file
+
+    # Show completion
+    show_clone_complete(results)
+
+
 @click.command()
 @click.option("--dry-run", is_flag=True, help="Preview generated data without creating anything")
 @click.option("--debug", is_flag=True, help="Enable debug logging of API requests/responses")
@@ -643,6 +888,15 @@ def main(dry_run: bool, debug: bool) -> None:
                 console.print("\n[yellow]Aborted.[/yellow]")
                 raise SystemExit(0)
 
+            # Show main menu (only in non-dry-run mode)
+            mode = prompt_main_menu()
+
+            if mode == "clone":
+                run_clone_wizard(debug=debug)
+                console.print("\n[green]Done. Goodbye![/green]")
+                raise SystemExit(0)
+
+        # Generate mode (original flow)
         # Outer loop for switching stores
         while True:
             domain = prompt_domain()

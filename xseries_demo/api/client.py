@@ -408,6 +408,118 @@ class XSeriesClient:
             return result, None
         return [], None
 
+    def get_all_products(self, page_size: int = 100) -> tuple[list[dict], str | None]:
+        """Fetch all products with pagination.
+
+        Args:
+            page_size: Number of products per page (max 100)
+
+        Returns:
+            (products, None) on success
+            ([], error_message) on failure
+        """
+        all_products: list[dict] = []
+        offset = 0
+
+        while True:
+            result = self._request_with_retry(
+                "GET", f"/products?page_size={page_size}&offset={offset}"
+            )
+            if result is None:
+                return [], "Failed to fetch products"
+
+            products = []
+            if "data" in result:
+                products = result["data"]
+            elif isinstance(result, list):
+                products = result
+
+            if not products:
+                break
+
+            all_products.extend(products)
+
+            # Check if we got fewer than page_size, meaning we're done
+            if len(products) < page_size:
+                break
+
+            offset += page_size
+
+        return all_products, None
+
+    def get_product(self, product_id: str) -> dict | None:
+        """Fetch a single product with full details.
+
+        Args:
+            product_id: UUID of the product
+
+        Returns:
+            Product data or None on failure
+        """
+        result = self._request_with_retry("GET", f"/products/{product_id}")
+        if result is None:
+            return None
+        if "data" in result:
+            return result["data"]
+        return result
+
+    def get_product_inventory(self, product_id: str) -> list[dict] | None:
+        """Fetch inventory for a product across all outlets.
+
+        Args:
+            product_id: UUID of the product
+
+        Returns:
+            List of inventory records or None on failure
+        """
+        result = self._request_with_retry("GET", f"/products/{product_id}/inventory")
+        if result is None:
+            return None
+        if "data" in result:
+            return result["data"]
+        if isinstance(result, list):
+            return result
+        return []
+
+    def get_all_customers(self, page_size: int = 100) -> tuple[list[dict], str | None]:
+        """Fetch all customers with pagination.
+
+        Args:
+            page_size: Number of customers per page (max 100)
+
+        Returns:
+            (customers, None) on success
+            ([], error_message) on failure
+        """
+        all_customers: list[dict] = []
+        offset = 0
+
+        while True:
+            result = self._request_with_retry(
+                "GET", f"/customers?page_size={page_size}&offset={offset}"
+            )
+            if result is None:
+                return [], "Failed to fetch customers"
+
+            customers = []
+            if "data" in result:
+                customers = result["data"]
+            elif isinstance(result, list):
+                customers = result
+
+            if not customers:
+                break
+
+            all_customers.extend(customers)
+
+            # Check if we got fewer than page_size, meaning we're done
+            if len(customers) < page_size:
+                break
+
+            offset += page_size
+
+        return all_customers, None
+
     def create_variant_attribute(self, name: str) -> dict | None:
         """Create a variant attribute (e.g., Color, Size).
 

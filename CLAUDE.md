@@ -75,6 +75,13 @@ Store setting determines price field: `price_including_tax` vs `price_excluding_
 ### Variant Products
 Apparel uses Color + Size attributes; other verticals use Color (or Shade for Beauty) only. `get_or_create_variant_attributes()` handles idempotent attribute creation.
 
+### Clone Account Feature (`clone.py`)
+Copies products and customers from one X-Series account to another:
+- `get_all_products()` / `get_all_customers()`: Paginated fetching from source
+- `transform_product_for_creation()` / `transform_customer_for_creation()`: Strip IDs, system fields
+- `map_outlets_by_name()`: Match outlet IDs between accounts for inventory cloning
+- Inventory is cloned with exact quantities when outlets match by name
+
 ## Key Documents
 
 - `SPEC.md` - Complete functional specification with API schemas and implementation plan
