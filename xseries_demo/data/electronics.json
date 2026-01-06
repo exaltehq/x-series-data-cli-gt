@@ -1,0 +1,72 @@
+{
+  "products": [
+    "Wireless Earbuds X1",
+    "Headphones Studio",
+    "Bluetooth Speaker Boom",
+    "Phone Case Armor",
+    "Screen Protector Shield",
+    "Charging Cable Rapid",
+    "Power Bank Mega",
+    "Wireless Charger Qi",
+    "USB Hub Multi",
+    "Webcam Crystal",
+    "Mouse Precision",
+    "Keyboard Tactile",
+    "Mouse Pad Glide",
+    "Laptop Stand Riser",
+    "Monitor Light Bar",
+    "Desk Lamp Bright",
+    "Smart Watch Band Sport",
+    "Tablet Stand Flex",
+    "Cable Organizer Tidy",
+    "HDMI Cable Ultra",
+    "Memory Card Turbo",
+    "Flash Drive Swift",
+    "External SSD Velocity",
+    "Smart Plug Connect",
+    "Portable Charger Volt",
+    "Phone Grip Ring",
+    "Laptop Sleeve Guard",
+    "Screen Cleaner Spray",
+    "Earphone Case Armor",
+    "Car Mount Dash",
+    "Ring Light Halo",
+    "Microphone Podcast",
+    "Stylus Pen Draw",
+    "Cable Adapter Hub"
+  ],
+  "adjectives": [
+    "Pro",
+    "Ultra",
+    "Premium",
+    "Compact",
+    "Portable",
+    "Wireless",
+    "High-Speed",
+    "Ergonomic",
+    "Gaming",
+    "Professional",
+    "Mini",
+    "Max"
+  ],
+  "brands": [
+    "TechFlow",
+    "ProSound",
+    "VoltEdge",
+    "NexGen",
+    "CoreTech",
+    "SwiftLink",
+    "PrimeTech",
+    "EliteGear",
+    "SmartZone",
+    "DigitalPro"
+  ],
+  "price_range": {
+    "min": 50.00,
+    "max": 1200.00
+  },
+  "supply_margin": {
+    "min": 0.50,
+    "max": 0.70
+  }
+}

@@ -1,0 +1,367 @@
+Updating Variants
+Updating variant products
+To update a variant product, or its family, send a PUT request to https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/{id}. Note that the update endpoints cannot create new variants. To create new variants, see Creating variants.
+
+The request contains two top level sections. common and details. These represent different fields that can be set on the different product classes. This document is focusing on variants, but the concepts apply to all classes of product.
+
+common represents fields that every member of a variant family has in common. Such as the name and description. If you provide these fields, it will update every member of the variant family. In the case of standard and composite products, these fields only apply to that product.
+
+details represents fields that are specific to one product. In the case of variants, it will update one variant. It will update the variant whose id is in the URL. product_codes and price are examples of fields that are specific to a product.
+
+See the specification for details of the exact fields you can provide to this endpoint. Lets walk through some examples.
+
+Updating basic common fields
+This example assumes there is a variant family with three members. This example will update the name and description.
+
+You send a PUT request to https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/{id}. ID can be any member of the family.
+
+This will update every member of the variant family with the new name and description. Name is important to variants, because that is what defines a family. You cannot update the name of an individual variant, it must remain the same as the family. You cannot move a product to a different family by changing its name.
+
+JSON
+
+{
+    "common": {
+      "description": "The product is the latest batch of T-Shirts from Puma.",
+      "name": "Puma T-Shirt"
+    }
+}
+Updating variant attributes
+Lets work through a more complicated example, where we want to add a variant attribute to the family. Variant attributes define the aspects of a product that vary from the parent. Eg. Size or Color or Material.
+
+In this example, we assume that a variant family exists with the Size attribute. We want to add the Color attribute.
+
+When adding an attribute, you specify the attribute in the common section. You do this because it impacts every member of the family. You specify attribute values in the details section. These only apply to individual variants. The limit of three attributes per family still applies.
+
+This update API is a patch style at the field level (with a couple of special exceptions we will talk about). You need to provide all variant attributes in the arrays, not only the new ones.
+
+You can retrieve the variant attribute details from the variant attributes endpoints. See List Variant Attributes for details.
+
+Lets assume the family has three members with the following IDs.
+
+6f32baa8-9a5f-4697-964f-cb2ffa6dff1a
+3d7d399d-1d61-4e18-be08-3f51a586584c
+0e4066d7-7981-4900-b37c-627fd929ad59
+You can pick any member of the family to go first in this tutorial.
+
+PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/6f32baa8-9a5f-4697-964f-cb2ffa6dff1a
+
+JSON
+
+{
+    "common": {
+      "variant_attributes": [{
+        "attribute_id": "uuid-for-size"
+        }, {
+        "attribute_id": "uuid-for-color"
+        }]
+    },
+
+    "details": {
+      "variant_attribute_values": [{
+        "attribute_id": "uuid-for-size",
+        "attribute_value": "M"
+      }, {
+        "attribute_id": "uuid-for-color",
+        "attribute_value": "Green"
+      }]
+    }
+}
+When adding new attributes, the rest of the family will have blank values for the new attributes. This is not a valid state. If not addressed, the de-duplication tool will be displayed on the Product Edit page on the next edit.
+
+Lets update the other two members of the family. You only need to specify the details section here. We are only updating individual variants.
+
+PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/3d7d399d-1d61-4e18-be08-3f51a586584c
+
+JSON
+
+{
+    "details": {
+      "variant_attribute_values": [{
+        "attribute_id": "uuid-for-size",
+        "attribute_value": "M"
+      }, {
+        "attribute_id": "uuid-for-color",
+        "attribute_value": "Blue"
+      }]
+    }
+}
+PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/0e4066d7-7981-4900-b37c-627fd929ad59
+
+JSON
+
+{
+    "details": {
+      "variant_attribute_values": [{
+        "attribute_id": "uuid-for-size",
+        "attribute_value": "M"
+      }, {
+        "attribute_id": "uuid-for-color",
+        "attribute_value": "Red"
+      }]
+    }
+}
+We should now have a variant family with two attributes, with the three members being M / Green, M / Blue and M / Red.
+
+Changing existing attributes
+To rearrange existing attributes you can change their position in the array and the values will follow them. So using the previous examples, you would provide the following to swap the location of size and color. This will bring the associated values with it.
+
+PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/6f32baa8-9a5f-4697-964f-cb2ffa6dff1a
+
+JSON
+
+{
+    "common": {
+      "variant_attributes": [{
+        "attribute_id": "uuid-for-color"
+        }, {
+        "attribute_id": "uuid-for-size"
+        }]
+    }
+}
+If you want to change a variant attribute at a given position, you need to provide the ID of the attribute record. See the below example. Providing the id for the attribute lets the system know that you want to keep the values from the previous attribute. If you don't provide the id, and only provide the attribute id, the values associated with the previous attribute will be removed.
+
+PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/6f32baa8-9a5f-4697-964f-cb2ffa6dff1a
+
+JSON
+
+{
+    "common": {
+      "variant_attributes": [{
+        "id" : 1,
+        "attribute_id": "uuid-for-new-attribute"
+        }, {
+        "id": 2,
+        "attribute_id": "uuid-for-size"
+        }]
+    }
+}
+Updating product suppliers
+The Product suppliers field is one of the exceptions we talked about earlier. the relationship between variant family values and product specific values is not as straight forward.
+
+In order to understand how to update product suppliers, we need to define some terms. product supplier : A product supplier refers to a particular supplier assigned to a product. supplier : A source of products.
+
+When we say a product supplier id, we are referring to a record representing a supplier assigned to a product. When we say supplier id, we are referring to the supplier entity itself.
+
+Let's assume you have a family with one supplier, and you would like to add a second. You would send the following payload. You send the supplier information in the common section, so it doesn't matter which variant id you use in the URL. This will matter further on. PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/{id}
+
+JSON
+
+{
+  "common": {
+    "product_suppliers":[
+      {
+        "supplier_id": "0242ac12-0002-11ed-fa02-adf7d2b291bb"
+      },
+      {
+        "supplier_id": "e7d421b3-29c8-4525-a13d-c8bcf9a02a93"
+      }
+    ]
+  }
+}
+Lets say we made a mistake with that first payload, and we actually wanted the second supplier to be f8e532c4-29c8-4525-a13d-c8bcf9b13b04. There are two ways we can achieve this update, depending on how you want it to be shown in the products history.
+
+Supplier only update
+You can directly provide the new supplier id like so. By doing so, the supplier change will be shown in product history as removing supplier e7d421b3-29c8-4525-a13d-c8bcf9a02a93 and adding supplier f8e532c4-29c8-4525-a13d-c8bcf9b13b04. PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/{id}
+
+JSON
+
+{
+  "common": {
+    "product_suppliers":[
+      {
+        "supplier_id": "0242ac12-0002-11ed-fa02-adf7d2b291bb"
+      },
+      {
+        "supplier_id": "f8e532c4-29c8-4525-a13d-c8bcf9b13b04"
+      }
+    ]
+  }
+}
+Product supplier id update
+To have the supplier modification show as an update, you will need the id of the product supplier you are updating. A product supplier id represents an individual link between a product and a supplier. This link has its own ID. It is this ID you can use to have a supplier modification show as an update. The product supplier ids are included in the response from the https://<<domain_prefix>>.retail.lightspeed.app/api/2.0/products endpoint.
+
+JSON
+
+...
+  "product_suppliers": [
+      {
+          "id": "6d7195f7-f1f4-40a7-8cc7-aec480ff99e9",
+          "product_id": "0242ac12-0002-11e9-e8c4-659494e33113",
+          "supplier_id": "0242ac12-0002-11ed-fa02-adf7d2b291bb",
+          "supplier_name": "Supplier 1",
+          "code": "10",
+          "price": 1.0
+      },
+      {
+          "id": "185e45de-3ca0-4753-b7f2-f2970be84f2c",
+          "product_id": "0242ac12-0002-11e9-e8c4-659494e33113",
+          "supplier_id": "e7d421b3-29c8-4525-a13d-c8bcf9a02a93",
+          "supplier_name": "Supplier 2",
+          "code": "11",
+          "price": 1.0
+      }
+  ],
+  ...
+You can see in the above payload it has the two suppliers just like the first example. You still want to update the second supplier. You would include the following fields in the update request. Again the common section of the payload is used because the update will apply to an entire variant family. Note that any product supplier ids used in the update request must belong to the product with the ID used in the URL.
+
+PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/{id}
+
+JSON
+
+{
+  "common": {
+    "product_suppliers":[
+      {
+        "supplier_id": "0242ac12-0002-11ed-fa02-adf7d2b291bb"
+      },
+      {
+        "id": "185e45de-3ca0-4753-b7f2-f2970be84f2c",
+        "supplier_id": "f8e532c4-29c8-4525-a13d-c8bcf9b13b04"
+      }
+    ]
+  }
+}
+The first item only includes the supplier ID, which is acting as a place holder saying we want that supplier to stay in the first position. The second item includes the id of the product supplier record and a supplier id. This is saying that for the second record, we want the supplier id to be f8e532c4-29c8-4525-a13d-c8bcf9b13b04 but we want the supply price and supplier code to remain the same.
+
+Doing the update in this way will be reflected in product history as an update.
+
+Updating the code and price
+If you want to update the code or price associated with a supplier, you would use the following payload. We used the details section here because we only wanted the code and price to apply to a specific variant. You can use these fields in the common section of the payload, and have them apply to the entire family.
+
+You can only modify or set codes and prices for suppliers that belong to the variant family. Family suppliers are suppliers that have been specified in the common section in this request, or prior requests for one of the variants. Attempting to set details for a different suppliers will fail.
+
+PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/{id}
+
+JSON
+
+{
+  ...
+  "details": {
+    "product_suppliers": [{
+        "supplier_id": "0242ac12-0002-11ed-fa02-adf7d2b291bb",
+        "code": "AA001-A",
+        "price": 15.0
+      },
+      {
+        "supplier_id": "f8e532c4-29c8-4525-a13d-c8bcf9b13b04",
+        "code": "BB001-B",
+        "price": 5.0
+      }]
+  }
+  ...
+}
+code and price can be specified in the common section as well. If they are specified in the common section, those values will be applied to every variant in the family. For example, if you have a single supplier for your variant family, and you want to specify a default code and price for it, you could use the following payload.
+
+PUT https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/{id}
+
+JSON
+
+{
+  ...
+  "common": {
+    "product_suppliers": [{
+        "supplier_id": "0242ac12-0002-11ed-fa02-adf7d2b291bb",
+        "code": "DEFAULT-CODE",
+        "price": 10
+      }]
+  }
+  ...
+}
+Responses
+All variant updates are done through the 2.1 products API with a PUT request. Response will be the representation of the product after the update has been executed. The response structure contains the same information that you PUT to the API. An example is below. This API is 2.1 rather than 2.0 because the shape of the payload is very different to 2.0.
+
+You can copy the data section of this response and PUT it back to update more information.
+
+JSON
+
+{
+    "data": {
+        "product_id": "0242ac12-0002-11e9-e8c4-659494e33112",
+        "common": {
+            "name": "Component + Variant + 3 Options + All",
+            "account_code_sale": "200",
+            "account_code_purchase": "300",
+            "track_inventory": true,
+            "brand_id": "0242ac12-0002-11ed-fa02-adf7d2b43615",
+            "product_category_id": "0242ac12-0002-11ed-fa02-adf7d2b5fca8",
+            "product_suppliers": [
+                {
+                    "id": "610a99e5-5fbc-4107-a74b-1333320b9f49",
+                    "supplier_id": "0242ac12-0002-11ed-fa02-adf7d2b291bb"
+                },
+                {
+                    "id": "aa771321-a460-4929-bed1-faf9e6900749",
+                    "supplier_id": "e7d421b3-29c8-4525-a13d-c8bcf9a02a93"
+                }
+            ],
+            "variant_attributes": [
+                {
+                    "id": 1,
+                    "attribute_id": "0242ac12-0002-11ed-fa02-adf7d2aef7fe"
+                },
+                {
+                    "id": 2,
+                    "attribute_id": "0242ac12-0002-11ed-fa02-adf7d2af2b6e"
+                },
+                {
+                    "id": 3,
+                    "attribute_id": "0242ac12-0002-11ed-fa02-adf7d2af5649"
+                }
+            ]
+        },
+        "details": {
+            "is_active": true,
+            "variant_name": "Component + Variant + 3 Options + All / S / Blue / Cloth",
+            "product_codes": [
+                {
+                    "type": "CUSTOM",
+                    "code": "1000044"
+                }
+            ],
+            "price_including_tax": 0,
+            "all_outlets_tax": {
+                "tax_id": "00000000-0002-0002-0002-000000000003"
+            },
+            "inventory": [
+                {
+                    "outlet_id": "0242ac12-0002-11e9-e8c4-659494dde2eb",
+                    "current_amount": 50,
+                    "reorder_amount": 10,
+                    "reorder_point": 5
+                },
+                {
+                    "outlet_id": "0242ac12-0002-11e9-e8c4-659494e196e3",
+                    "current_amount": 20,
+                    "reorder_amount": 10,
+                    "reorder_point": 5
+                }
+            ],
+            "product_suppliers": [
+                {
+                    "supplier_id": "0242ac12-0002-11ed-fa02-adf7d2b291bb",
+                    "code": "10",
+                    "price": 1
+                },
+                {
+                    "supplier_id": "e7d421b3-29c8-4525-a13d-c8bcf9a02a93",
+                    "code": "11",
+                    "price": 1
+                }
+            ],
+            "variant_attribute_values": [
+                {
+                    "attribute_id": "0242ac12-0002-11ed-fa02-adf7d2aef7fe",
+                    "attribute_value": "S"
+                },
+                {
+                    "attribute_id": "0242ac12-0002-11ed-fa02-adf7d2af2b6e",
+                    "attribute_value": "Blue"
+                },
+                {
+                    "attribute_id": "0242ac12-0002-11ed-fa02-adf7d2af5649",
+                    "attribute_value": "Cloth"
+                }
+            ]
+        }
+    }
+}

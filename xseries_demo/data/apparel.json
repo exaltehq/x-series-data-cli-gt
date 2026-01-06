@@ -1,0 +1,72 @@
+{
+  "products": [
+    "T-Shirt V2",
+    "Polo Shirt Pro",
+    "Dress Shirt Elite",
+    "Hoodie Max",
+    "Sweater 360",
+    "Cardigan Plus",
+    "Jacket XR",
+    "Blazer One",
+    "Coat Ultra",
+    "Jeans Slim 501",
+    "Chinos Flex",
+    "Shorts Active",
+    "Skirt A-Line",
+    "Dress Evening",
+    "Sneakers Air",
+    "Boots Trek",
+    "Sandals Breeze",
+    "Loafers Classic",
+    "Belt Signature",
+    "Scarf Luxe",
+    "Hat Fedora",
+    "Cap Snap",
+    "Gloves Touch",
+    "Socks Comfort",
+    "Joggers Urban",
+    "Windbreaker Storm",
+    "Tank Top Flow",
+    "Henley Crew",
+    "Sweatpants Relax",
+    "Vest Puffer Lite",
+    "Romper Weekend",
+    "Jumpsuit Utility",
+    "Leggings Flex",
+    "Beanie Thermal"
+  ],
+  "adjectives": [
+    "Classic",
+    "Vintage",
+    "Modern",
+    "Slim-Fit",
+    "Relaxed",
+    "Premium",
+    "Essential",
+    "Casual",
+    "Formal",
+    "Athletic",
+    "Lightweight",
+    "Cozy"
+  ],
+  "materials": [
+    "Cotton",
+    "Denim",
+    "Wool",
+    "Polyester",
+    "Leather",
+    "Linen",
+    "Silk",
+    "Cashmere",
+    "Fleece",
+    "Canvas"
+  ],
+  "price_range": {
+    "min": 15.00,
+    "max": 120.00
+  },
+  "supply_margin": {
+    "min": 0.40,
+    "max": 0.60
+  }
+}

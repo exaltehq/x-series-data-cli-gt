@@ -1,0 +1,72 @@
+{
+  "products": [
+    "Mixing Bowl Set Nova",
+    "Cutting Board Prime",
+    "Knife Set Elite",
+    "Cookware Set Pro",
+    "Frying Pan Titanium",
+    "Baking Sheet Classic",
+    "Storage Container Snap",
+    "Utensil Set Deluxe",
+    "Measuring Cups Precision",
+    "Dish Towels Absorbent",
+    "Oven Mitt Heat Guard",
+    "Serving Tray Elegance",
+    "Candle Set Aroma",
+    "Throw Pillow Comfort",
+    "Blanket Plush",
+    "Picture Frame Gallery",
+    "Wall Clock Metro",
+    "Vase Artisan",
+    "Plant Pot Terra",
+    "Organizer Basket Weave",
+    "Laundry Hamper Fold",
+    "Bath Towel Set Spa",
+    "Shower Curtain Aqua",
+    "Door Mat Welcome",
+    "Spice Rack Orbit",
+    "Wine Rack Cellar",
+    "Napkin Holder Luxe",
+    "Salt Pepper Set Duo",
+    "Trivet Heat Safe",
+    "Fruit Bowl Centro",
+    "Cheese Board Slate",
+    "Ice Bucket Frost",
+    "Carafe Pour",
+    "Placemats Woven Set"
+  ],
+  "adjectives": [
+    "Stainless Steel",
+    "Bamboo",
+    "Ceramic",
+    "Glass",
+    "Wooden",
+    "Non-Stick",
+    "Decorative",
+    "Rustic",
+    "Modern",
+    "Handcrafted",
+    "Premium",
+    "Essential"
+  ],
+  "materials": [
+    "Stainless Steel",
+    "Bamboo",
+    "Ceramic",
+    "Glass",
+    "Wood",
+    "Cotton",
+    "Linen",
+    "Silicone",
+    "Cast Iron",
+    "Marble"
+  ],
+  "price_range": {
+    "min": 10.00,
+    "max": 300.00
+  },
+  "supply_margin": {
+    "min": 0.45,
+    "max": 0.60
+  }
+}

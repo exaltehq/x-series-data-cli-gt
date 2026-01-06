@@ -1,0 +1,72 @@
+{
+  "products": [
+    "Face Cream Daily",
+    "Moisturizer Hydra",
+    "Serum Vitamin C",
+    "Cleanser Foam",
+    "Toner Refresh",
+    "Face Mask Glow",
+    "Eye Cream Lift",
+    "Sunscreen Protect",
+    "Lip Balm Tinted",
+    "Lipstick Velvet",
+    "Foundation Flawless",
+    "Concealer Perfect",
+    "Mascara Volume",
+    "Eyeshadow Palette Nude",
+    "Blush Radiant",
+    "Bronzer Glow",
+    "Setting Spray Lock",
+    "Makeup Brush Set Pro",
+    "Shampoo Repair",
+    "Conditioner Silk",
+    "Hair Oil Argan",
+    "Body Lotion Shea",
+    "Hand Cream Rose",
+    "Perfume Essence",
+    "Primer Base Silk",
+    "Highlighter Beam",
+    "Brow Gel Define",
+    "Lash Serum Growth",
+    "Makeup Remover Pure",
+    "Face Mist Hydra",
+    "Night Cream Restore",
+    "Exfoliator Gentle",
+    "Hair Spray Hold",
+    "Nail Polish Lacquer"
+  ],
+  "adjectives": [
+    "Hydrating",
+    "Nourishing",
+    "Revitalizing",
+    "Brightening",
+    "Anti-Aging",
+    "Natural",
+    "Organic",
+    "Gentle",
+    "Professional",
+    "Luxurious",
+    "Daily",
+    "Intensive"
+  ],
+  "brands": [
+    "Glow Labs",
+    "Pure Radiance",
+    "Velvet Touch",
+    "Bloom Beauty",
+    "Luna Skin",
+    "Essence Co",
+    "Aura Naturals",
+    "Silk & Honey",
+    "Fresh Face",
+    "Noble Beauty"
+  ],
+  "price_range": {
+    "min": 8.00,
+    "max": 120.00
+  },
+  "supply_margin": {
+    "min": 0.30,
+    "max": 0.50
+  }
+}

@@ -1,0 +1,332 @@
+Creating Variants
+Creating Variants
+1. Creating variants
+Variant Attributes
+The API to create variants requires variant attributes to exist in your store. To create variant attributes, see Create Variant Attributes for details. A minimum payload is shown below.
+
+JSON
+
+{
+    "name": "Color"
+}
+The above request will give you the following response
+
+JSON
+
+{
+    "data": {
+        "id": "069db350-8d41-11eb-f6a9-869155c00090",
+        "name": "Color",
+        "created_at": "2023-03-02T22:23:52+00:00",
+        "updated_at": "2023-03-02T22:23:52+00:00"
+    }
+}
+The id you get back from creating an attribute will be used in the payload for creating variants.
+
+To create a variant family, a POST is sent to https://<<domain_prefix>>.retail.lightspeed.app/api/2.0/products. The name and variants properties are required at the top level, with variant_definitions being required in the variants arrays. An example minimum payload is below. Note that if sku is left out of the payload, one will be generated for you according to your configured sku sequence.
+
+Request payload:
+
+JSON
+
+{
+  "name": "Variant Colors",
+  "variants": [
+      {
+          "variant_definitions": [
+              {
+                  "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                  "value": "Red"
+              },
+              {
+                  "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                  "value": "S"
+              }
+          ]
+      },
+      {
+          "variant_definitions": [
+              {
+                  "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                  "value": "Blue"
+              },
+              {
+                  "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                  "value": "M"
+              }
+          ]
+      },
+      {
+          "variant_definitions": [
+              {
+                  "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                  "value": "Green"
+              },
+              {
+                  "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                  "value": "M"
+              }
+          ]
+      },
+      {
+          "variant_definitions": [
+              {
+                  "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                  "value": "Green"
+              },
+              {
+                  "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                  "value": "S"
+              }
+          ]
+      }
+  ]
+}
+NOTE: The system orders the variants based on the attributes and values of the product family. In this example, variants with "Red" color will be first, then "Blue" and finally "Green". Within a particular color, variants of size "S" will come first then "M". This means "Green / S" variant will be ordered before "Green / M".
+
+Response payload:
+
+JSON
+
+{
+    "data": [
+        "6f32baa8-9a5f-4697-964f-cb2ffa6dff1a",
+        "cae9eebf-abfa-4c19-b3cd-c6e4c09c512e",
+        "3d7d399d-1d61-4e18-be08-3f51a586584c",
+        "0e4066d7-7981-4900-b37c-627fd929ad59"
+    ]
+}
+NOTE: The returned ids represent all the variants that were created in the above request.
+
+2. Get all the variants
+Using the id of the parent product (the first in the array), we can retrieve the family by making a GET request to the 3.0/products endpoint. Note that we provided a minimum payload and we can see that the sku fields (sku_number and primary_sku_code) were generated for us with everything else being default values. Either null or empty.
+
+
+https://<<domain_prefix>>.retail.lightspeed.app/api/3.0/products/6f32baa8-9a5f-4697-964f-cb2ffa6dff1a
+Response payload:
+
+JSON
+
+{
+  "data": {
+      "id": "6f32baa8-9a5f-4697-964f-cb2ffa6dff1a",
+      "classification": "variant",
+      "name": "Variant Colors",
+      "description": "",
+      "is_active": true,
+      "tracks_inventory": false,
+      "version": 27561014304,
+      "created_at": "2023-02-14T03:01:43Z",
+      "updated_at": "2023-02-14T03:01:43Z",
+      "deleted_at": null,
+      "product_type_id": null,
+      "brand_id": null,
+      "tag_ids": [],
+      "suppliers": [],
+      "sku_number": "12075",
+      "product_codes": [
+          {
+              "id": "00e99161-6ccb-41ed-83b4-973255f5c0f0",
+              "type": "CUSTOM",
+              "code": "12075"
+          }
+      ],
+      "account_code_sales": null,
+      "account_code_purchase": null,
+      "attributes": {},
+      "price_standard": null,
+      "price_outlet": null,
+      "images": [],
+      "composite_bom": {},
+      "variants": [
+          {
+              "id": "6f32baa8-9a5f-4697-964f-cb2ffa6dff1a",
+              "name": "Variant Colors",
+              "is_active": true,
+              "price_standard": null,
+              "price_outlet": {
+                  "tax_exclusive": "0",
+                  "loyalty_amount": null,
+                  "outlets": [
+                      {
+                          "tax_id": "06c2f1bf-e9ca-11e9-efcf-bfc9d7444ac2",
+                          "is_default": true,
+                          "tax_inclusive": "0"
+                      }
+                  ]
+              },
+              "variant_definitions": [
+                  {
+                      "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                      "name": "Colour",
+                      "value": "Red"
+                  },
+                  {
+                      "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                      "name": "Size",
+                      "value": "S"
+                  }
+              ],
+              "images": [],
+              "primary_sku_code": "12075",
+              "product_codes": [
+                  {
+                      "id": "00e99161-6ccb-41ed-83b4-973255f5c0f0",
+                      "type": "CUSTOM",
+                      "code": "12075"
+                  }
+              ]
+          },
+          {
+              "id": "cae9eebf-abfa-4c19-b3cd-c6e4c09c512e",
+              "name": "Variant Colors",
+              "is_active": true,
+              "price_standard": null,
+              "price_outlet": {
+                  "tax_exclusive": "0",
+                  "loyalty_amount": null,
+                  "outlets": [
+                      {
+                          "tax_id": "06c2f1bf-e9ca-11e9-efcf-bfc9d7444ac2",
+                          "is_default": true,
+                          "tax_inclusive": "0"
+                      }
+                  ]
+              },
+              "variant_definitions": [
+                  {
+                      "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                      "name": "Colour",
+                      "value": "Blue"
+                  },
+                  {
+                      "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                      "name": "Size",
+                      "value": "M"
+                  }
+              ],
+              "images": [],
+              "primary_sku_code": "12076",
+              "product_codes": [
+                  {
+                      "id": "00e99161-6ccb-41ed-83b4-973255f5c0f0",
+                      "type": "CUSTOM",
+                      "code": "12076"
+                  }
+              ]
+          },
+          {
+              "id": "0e4066d7-7981-4900-b37c-627fd929ad59",
+              "name": "Variant Colors",
+              "is_active": true,
+              "price_standard": null,
+              "price_outlet": {
+                  "tax_exclusive": "0",
+                  "loyalty_amount": null,
+                  "outlets": [
+                      {
+                          "tax_id": "06c2f1bf-e9ca-11e9-efcf-bfc9d7444ac2",
+                          "is_default": true,
+                          "tax_inclusive": "0"
+                      }
+                  ]
+              },
+              "variant_definitions": [
+                  {
+                      "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                      "name": "Colour",
+                      "value": "Green"
+                  },
+                  {
+                      "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                      "name": "Size",
+                      "value": "S"
+                  }
+              ],
+              "images": [],
+              "primary_sku_code": "12078",
+              "product_codes": [
+                  {
+                      "id": "61fcf465-7d26-431b-a45f-f2774cfd1789",
+                      "type": "CUSTOM",
+                      "code": "12078"
+                  }
+              ]
+          },
+          {
+              "id": "3d7d399d-1d61-4e18-be08-3f51a586584c",
+              "name": "Variant Colors",
+              "is_active": true,
+              "price_standard": null,
+              "price_outlet": {
+                  "tax_exclusive": "0",
+                  "loyalty_amount": null,
+                  "outlets": [
+                      {
+                          "tax_id": "06c2f1bf-e9ca-11e9-efcf-bfc9d7444ac2",
+                          "is_default": true,
+                          "tax_inclusive": "0"
+                      }
+                  ]
+              },
+              "variant_definitions": [
+                  {
+                      "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                      "name": "Colour",
+                      "value": "Green"
+                  },
+                  {
+                      "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                      "name": "Size",
+                      "value": "M"
+                  }
+              ],
+              "images": [],
+              "primary_sku_code": "12077",
+              "product_codes": [
+                  {
+                      "id": "2367ac6e-de22-4ed9-a515-b3c595554af2",
+                      "type": "CUSTOM",
+                      "code": "12077"
+                  }
+              ]
+          }
+      ]
+  }
+}
+3. Adding additional variants
+To create new variants for an existing family, a POST request can be made to https://<<domain_prefix>>.retail.lightspeed.app/api/2.1/products/. When adding new variants with this API, you must provide variant_attribute_values that match the family you are adding this variant too. i.e. If the family contains Color and Size, then you must provide values for Color and Size when creating this variant.
+
+The following is an example payload for creating an additional variant of Variant Colors.
+
+JSON
+
+{
+    "common": {
+        "name": "Variant Colors"
+    },
+
+    "details": {
+        ...
+        "product_codes": [
+            {
+            "code": "color-orange",
+            "type": "CUSTOM"
+            }
+        ],
+        "variant_attribute_values": [
+            {
+                "attribute_id": "069db350-8d41-11eb-f6a9-869155c00090",
+                "attribute_value": "Orange"
+            },
+            {
+                "attribute_id": "2f0ff40b-60ed-48c7-8e32-01d0c9d263ea",
+                "attribute_value": "S"
+            }
+        ],
+      "price_including_tax": 50
+      ...
+    }
+}
+This payload is minimal for demonstration. Any fields that can be assigned to an individual variant can be provided to this API. See the reference doc for details.
+
