@@ -1,6 +1,7 @@
 """HTTP client for X-Series API with rate limiting and retries."""
 
 import json
+import logging
 import time
 from datetime import datetime
 from email.utils import parsedate_to_datetime
@@ -10,6 +11,7 @@ import httpx
 from rich.console import Console
 
 console = Console()
+logger = logging.getLogger(__name__)
 
 
 class RateLimitError(Exception):
@@ -50,9 +52,24 @@ class XSeriesClient:
         self.rate_limit_remaining: int | None = None
         self.rate_limit_total: int | None = None
         self.last_error: str | None = None  # Track last error for reporting
+        # Track last response details for logging
+        self.last_status_code: int | None = None
+        self.last_request_payload: dict | None = None
+        self.last_response_body: dict | str | None = None
 
     def _log_debug(self, method: str, url: str, request_body: dict | None, response: httpx.Response) -> None:
         """Log request/response details for debugging."""
+        # Always log to Python logger at debug level
+        logger.debug(f"{method} {url} -> {response.status_code}")
+        if request_body:
+            logger.debug(f"Request payload: {json.dumps(request_body)}")
+        try:
+            resp_json = response.json()
+            logger.debug(f"Response body: {json.dumps(resp_json)}")
+        except (ValueError, json.JSONDecodeError):
+            logger.debug(f"Response text: {response.text[:500]}")
+
+        # Also print to console if debug flag is set
         if not self.debug:
             return
         console.print(f"\n[dim]─── DEBUG {method} {url} ───[/dim]")
@@ -68,6 +85,13 @@ class XSeriesClient:
 
     def _handle_response(self, response: httpx.Response) -> dict | None:
         """Handle API response, including rate limit headers."""
+        # Track response details for logging
+        self.last_status_code = response.status_code
+        try:
+            self.last_response_body = response.json()
+        except (ValueError, json.JSONDecodeError):
+            self.last_response_body = response.text if response.text else None
+
         # Update rate limit info from headers
         if "X-RateLimit-Remaining" in response.headers:
             self.rate_limit_remaining = int(response.headers["X-RateLimit-Remaining"])
@@ -154,6 +178,8 @@ class XSeriesClient:
         """
         delay = 0.1  # Start with 100ms delay between requests
         is_absolute_url = endpoint.startswith(("http://", "https://"))
+        # Track request payload for logging
+        self.last_request_payload = json_data
 
         for attempt in range(max_retries + 1):
             try:
@@ -202,6 +228,7 @@ class XSeriesClient:
             except APIError as e:
                 # Don't retry client errors (4xx except 429)
                 if 400 <= e.status_code < 500:
+                    logger.warning(f"API error {e.status_code}: {e.message}")
                     console.print(f"[red]Error: {e.message}[/red]")
                     self.last_error = e.message
                     return None
@@ -209,9 +236,11 @@ class XSeriesClient:
                 # Retry server errors with exponential backoff
                 if attempt < max_retries:
                     backoff = 2 ** attempt  # 1s, 2s, 4s
+                    logger.warning(f"Server error {e.status_code}, retrying in {backoff}s...")
                     console.print(f"[yellow]Server error. Retrying in {backoff}s...[/yellow]")
                     time.sleep(backoff)
                 else:
+                    logger.error(f"API error after {max_retries} retries: {e.message}")
                     console.print(f"[red]Error after {max_retries} retries: {e.message}[/red]")
                     self.last_error = e.message
                     return None
@@ -220,9 +249,11 @@ class XSeriesClient:
                 # Network errors - retry with backoff
                 if attempt < max_retries:
                     backoff = 2 ** attempt
+                    logger.warning(f"Network error, retrying in {backoff}s: {e}")
                     console.print(f"[yellow]Network error. Retrying in {backoff}s...[/yellow]")
                     time.sleep(backoff)
                 else:
+                    logger.error(f"Network error after {max_retries} retries: {e}")
                     console.print(f"[red]Network error: {e}[/red]")
                     self.last_error = f"Network error: {e}"
                     return None
@@ -376,6 +407,61 @@ class XSeriesClient:
             return result, None
         return [], None
 
+    def get_brands(self) -> tuple[list[dict], str | None]:
+        """Fetch all brands for the account.
+
+        Returns:
+            (brands, None) on success
+            ([], error_message) on failure
+        """
+        all_brands = []
+        error = self._paginate_v2("/brands", all_brands)
+        if error:
+            return [], error
+        return all_brands, None
+
+    def create_brand(self, brand_data: dict) -> dict | None:
+        """Create a brand.
+
+        Args:
+            brand_data: Brand payload with name and optional description
+
+        Returns:
+            Created brand id or None on failure
+        """
+        result = self._post("/brands", brand_data)
+        if result and "data" in result:
+            # API returns {"data": "uuid"} for brand creation
+            return {"id": result["data"]}
+        return result
+
+    def get_suppliers(self) -> tuple[list[dict], str | None]:
+        """Fetch all suppliers for the account.
+
+        Returns:
+            (suppliers, None) on success
+            ([], error_message) on failure
+        """
+        all_suppliers = []
+        error = self._paginate_v2("/suppliers", all_suppliers)
+        if error:
+            return [], error
+        return all_suppliers, None
+
+    def create_supplier(self, supplier_data: dict) -> dict | None:
+        """Create a supplier.
+
+        Args:
+            supplier_data: Supplier payload with name and optional fields
+
+        Returns:
+            Created supplier data or None on failure
+        """
+        result = self._post("/suppliers", supplier_data)
+        if result and "data" in result:
+            return result["data"]
+        return result
+
     def create_sale(self, sale_data: dict) -> dict | None:
         """Create a register sale using v0.9 API.
 
@@ -408,23 +494,22 @@ class XSeriesClient:
             return result, None
         return [], None
 
-    def get_all_products(self, page_size: int = 100) -> tuple[list[dict], str | None]:
-        """Fetch all products with pagination.
+    def get_all_products(self) -> tuple[list[dict], str | None]:
+        """Fetch all products with cursor-based pagination.
 
-        Args:
-            page_size: Number of products per page (max 100)
+        Uses API 2.0 pagination with 'after' parameter and version cursor.
 
         Returns:
             (products, None) on success
             ([], error_message) on failure
         """
         all_products: list[dict] = []
-        offset = 0
+        after = 0
 
         while True:
-            result = self._request_with_retry(
-                "GET", f"/products?page_size={page_size}&offset={offset}"
-            )
+            # API 2.0 uses cursor-based pagination with 'after' parameter
+            endpoint = f"/products?after={after}" if after > 0 else "/products"
+            result = self._request_with_retry("GET", endpoint)
             if result is None:
                 return [], "Failed to fetch products"
 
@@ -439,11 +524,15 @@ class XSeriesClient:
 
             all_products.extend(products)
 
-            # Check if we got fewer than page_size, meaning we're done
-            if len(products) < page_size:
+            # Get the max version for the next page cursor
+            version_info = result.get("version", {})
+            max_version = version_info.get("max")
+
+            if max_version is None:
+                # Fallback: no more pages if no version info
                 break
 
-            offset += page_size
+            after = max_version
 
         return all_products, None
 
@@ -481,23 +570,22 @@ class XSeriesClient:
             return result
         return []
 
-    def get_all_customers(self, page_size: int = 100) -> tuple[list[dict], str | None]:
-        """Fetch all customers with pagination.
+    def get_all_customers(self) -> tuple[list[dict], str | None]:
+        """Fetch all customers with cursor-based pagination.
 
-        Args:
-            page_size: Number of customers per page (max 100)
+        Uses API 2.0 pagination with 'after' parameter and version cursor.
 
         Returns:
             (customers, None) on success
             ([], error_message) on failure
         """
         all_customers: list[dict] = []
-        offset = 0
+        after = 0
 
         while True:
-            result = self._request_with_retry(
-                "GET", f"/customers?page_size={page_size}&offset={offset}"
-            )
+            # API 2.0 uses cursor-based pagination with 'after' parameter
+            endpoint = f"/customers?after={after}" if after > 0 else "/customers"
+            result = self._request_with_retry("GET", endpoint)
             if result is None:
                 return [], "Failed to fetch customers"
 
@@ -512,13 +600,85 @@ class XSeriesClient:
 
             all_customers.extend(customers)
 
-            # Check if we got fewer than page_size, meaning we're done
-            if len(customers) < page_size:
+            # Get the max version for the next page cursor
+            version_info = result.get("version", {})
+            max_version = version_info.get("max")
+
+            if max_version is None:
+                # Fallback: no more pages if no version info
                 break
 
-            offset += page_size
+            after = max_version
 
         return all_customers, None
+
+    def get_all_sales(self, page_size: int = 200) -> tuple[list[dict], str | None]:
+        """Fetch all register sales with pagination.
+
+        Uses the v0.9 API endpoint /api/register_sales with page-based pagination.
+
+        Args:
+            page_size: Number of sales per page (max 200 for API 0.x)
+
+        Returns:
+            (sales, None) on success
+            ([], error_message) on failure
+        """
+        all_sales: list[dict] = []
+        page = 1
+        total_pages = None
+
+        while True:
+            # Sales API is v0.9 (no /2.0 prefix), uses page-based pagination
+            endpoint = f"https://{self.domain}.retail.lightspeed.app/api/register_sales?page_size={page_size}&page={page}"
+            result = self._request_with_retry("GET", endpoint)
+            if result is None:
+                return [], "Failed to fetch sales"
+
+            # Extract pagination info from API 0.x response
+            pagination = result.get("pagination", {})
+            if total_pages is None:
+                total_pages = pagination.get("pages", 1)
+
+            sales = []
+            if "register_sales" in result:
+                sales = result["register_sales"]
+            elif "data" in result:
+                sales = result["data"]
+            elif isinstance(result, list):
+                sales = result
+
+            if not sales:
+                break
+
+            all_sales.extend(sales)
+
+            # Check if we've fetched all pages
+            if page >= total_pages:
+                break
+
+            page += 1
+
+        return all_sales, None
+
+    def get_sale(self, sale_id: str) -> dict | None:
+        """Fetch a single register sale with full details.
+
+        Args:
+            sale_id: UUID of the sale
+
+        Returns:
+            Sale data or None on failure
+        """
+        endpoint = f"https://{self.domain}.retail.lightspeed.app/api/register_sales/{sale_id}"
+        result = self._request_with_retry("GET", endpoint)
+        if result is None:
+            return None
+        if "register_sale" in result:
+            return result["register_sale"]
+        if "data" in result:
+            return result["data"]
+        return result
 
     def create_variant_attribute(self, name: str) -> dict | None:
         """Create a variant attribute (e.g., Color, Size).

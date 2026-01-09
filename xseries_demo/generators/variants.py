@@ -62,7 +62,7 @@ def generate_variant_products(
         raise ValueError(f"Unknown vertical prefix: {prefix}")
 
     products = vertical_data["products"]
-    colors = vertical_data["colors"]
+    variant_values = vertical_data["variant_values"]
     sizes = vertical_data.get("sizes", [])
     use_size = prefix == "APP" and size_attribute_id and sizes
 
@@ -73,27 +73,27 @@ def generate_variant_products(
         name = product["name"]
         base_price = product["base_price"]
 
-        # Build variants array with 5 colors/shades
+        # Build variants array with 5 variant values (colors/shades/sizes)
         variants = []
-        for color in colors:
+        for variant_value in variant_values:
             if use_size:
                 # For apparel, vary size
                 size = random.choice(sizes)
-                sku = generate_variant_sku(prefix, name, color, size)
+                sku = generate_variant_sku(prefix, name, variant_value, size)
                 variants.append({
                     "sku": sku,
                     "variant_definitions": [
-                        {"attribute_id": color_attribute_id, "value": color},
+                        {"attribute_id": color_attribute_id, "value": variant_value},
                         {"attribute_id": size_attribute_id, "value": size},
                     ],
                 })
             else:
-                # For other verticals, just color/shade
-                sku = generate_variant_sku(prefix, name, color, "")
+                # For other verticals, just the variant value (color/shade/size)
+                sku = generate_variant_sku(prefix, name, variant_value, "")
                 variants.append({
                     "sku": sku,
                     "variant_definitions": [
-                        {"attribute_id": color_attribute_id, "value": color},
+                        {"attribute_id": color_attribute_id, "value": variant_value},
                     ],
                 })
 
@@ -114,10 +114,11 @@ def get_or_create_variant_attributes(
 
     Args:
         client: XSeriesClient instance
-        prefix: Vertical prefix (APP, ELE, HOM, BTY)
+        prefix: Vertical prefix (APP, ELE, HOM, BTY, LIQ)
 
     Returns:
         (color_id, size_id) for Apparel
+        (size_id, None) for Liquor (bottle sizes)
         (color_id, None) for other verticals
         None on failure
     """
@@ -127,7 +128,12 @@ def get_or_create_variant_attributes(
         return None
 
     # Determine attribute names based on vertical
-    color_name = "Shade" if prefix == "BTY" else "Color"
+    if prefix == "LIQ":
+        primary_attr_name = "Size"
+    elif prefix == "BTY":
+        primary_attr_name = "Shade"
+    else:
+        primary_attr_name = "Color"
     need_size = prefix == "APP"
 
     color_id = None
@@ -141,9 +147,19 @@ def get_or_create_variant_attributes(
         elif name == "size":
             size_id = attr["id"]
 
+    # For Liquor, use Size as the primary attribute
+    if prefix == "LIQ":
+        if not size_id:
+            result = client.create_variant_attribute("Size")
+            if result:
+                size_id = result["id"]
+            else:
+                return None
+        return size_id, None
+
     # Create color/shade attribute if missing
     if not color_id:
-        result = client.create_variant_attribute(color_name)
+        result = client.create_variant_attribute(primary_attr_name)
         if result:
             color_id = result["id"]
         else:

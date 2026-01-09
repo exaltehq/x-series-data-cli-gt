@@ -12,6 +12,9 @@ from rich.text import Text
 console = Console()
 
 BANNER = r"""
+ ╦  ╦╔═╗╦ ╦╔╦╗╔═╗╔═╗╔═╗╔═╗╔╦╗
+ ║  ║║ ╦╠═╣ ║ ╚═╗╠═╝║╣ ║╣  ║║
+ ╩═╝╩╚═╝╩ ╩ ╩ ╚═╝╩  ╚═╝╚═╝═╩╝
 ██╗  ██╗      ███████╗███████╗██████╗ ██╗███████╗███████╗
 ╚██╗██╔╝      ██╔════╝██╔════╝██╔══██╗██║██╔════╝██╔════╝
  ╚███╔╝ █████╗███████╗█████╗  ██████╔╝██║█████╗  ███████╗
@@ -25,21 +28,21 @@ VERTICALS = {
     "2": ("Electronics", "ELE"),
     "3": ("Home & Kitchen", "HOM"),
     "4": ("Health & Beauty", "BTY"),
+    "5": ("Liquor", "LIQ"),
 }
 
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 
 def show_welcome_banner() -> None:
     """Display the welcome banner and description."""
     console.print(BANNER, style="bold cyan")
-    console.print(f"Demo Data Generator [dim]v{VERSION}[/dim]", style="bold white")
+    console.print(f"Demo Data Tool [dim]v{VERSION}[/dim]", style="bold white")
     console.print("[dim]Created by Geanny Tavarez <geanny.tavarez@lightspeedhq.com>[/dim]")
-    console.print("[dim]Last updated: 2026-01-05[/dim]\n")
+    console.print("[dim]Last updated: 2026-01-06[/dim]\n")
     console.print(
-        "Generate demo data (products, customers, and sales) for your\n"
-        "X-Series retail store.\n"
+        "Generate demo data or clone existing data between X-Series accounts.\n"
     )
 
 
@@ -48,8 +51,8 @@ def show_warning() -> bool:
     warning = Text()
     warning.append("WARNING\n\n", style="bold yellow")
     warning.append(
-        "This creates real records in X-Series.\n"
-        "Use only on demo/trial stores.\n"
+        "This tool creates real records in X-Series.\n"
+        "Use only on demo/trial/test stores.\n"
         "Cleanup requires manual deletion."
     )
     console.print(Panel(warning, border_style="yellow"))
@@ -72,12 +75,22 @@ def prompt_domain() -> str:
     return domain
 
 
-def show_token_instructions(include_sales: bool = True) -> None:
-    """Display instructions for obtaining a personal access token."""
+def show_token_instructions(include_sales: bool = True, read_only: bool = False) -> None:
+    """Display instructions for obtaining a personal access token.
+
+    Args:
+        include_sales: Whether to include sales:write scope
+        read_only: If True, show read scopes (for source account in clone)
+    """
     console.print()
-    scopes = "customers:write, products:write"
-    if include_sales:
-        scopes += ", sales:write"
+    if read_only:
+        scopes = "customers:read, products:read"
+        if include_sales:
+            scopes += ", sales:read"
+    else:
+        scopes = "customers:write, products:write"
+        if include_sales:
+            scopes += ", sales:write"
     instructions = (
         "[bold]Personal Access Token[/bold]\n\n"
         f"In X-Series: [cyan]Setup > Personal Tokens > New Token[/cyan]\n"
@@ -156,6 +169,7 @@ VERTICAL_PRICES = {
     "2": "$50–$1,200",
     "3": "$10–$300",
     "4": "$8–$120",
+    "5": "$16–$75",
 }
 
 
@@ -210,13 +224,15 @@ def prompt_create_variants(vertical_prefix: str) -> bool:
     """Ask if user wants to create variant products."""
     console.print()
     console.print("[bold]Variant Products[/bold]")
-    console.print("[dim]Creates 20 product families with 5 variants each (100 variant SKUs).[/dim]")
+    console.print("[dim]Creates 10 product families with 5 variants each (50 variant SKUs).[/dim]")
 
     # Show vertical-appropriate attribute info
     if vertical_prefix == "APP":
         console.print("[dim]Variants by: Color + Size[/dim]")
     elif vertical_prefix == "BTY":
         console.print("[dim]Variants by: Shade[/dim]")
+    elif vertical_prefix == "LIQ":
+        console.print("[dim]Variants by: Bottle Size (375ml, 750ml, 1L, 1.75L)[/dim]")
     else:
         console.print("[dim]Variants by: Color[/dim]")
 
@@ -235,15 +251,15 @@ def show_creation_summary(
     console.print()
 
     # Calculate total records
-    total_records = 100 + 50  # products + customers
+    total_records = 50 + 50  # products + customers
     if create_sales:
         total_records += 50
     if create_variants:
-        total_records += 100  # 20 families × 5 variants
+        total_records += 50  # 10 families × 5 variants
 
     sales_line = "  Sales:     [cyan]50 (past 90 days)[/cyan]\n" if create_sales else ""
     inventory_line = "  Inventory: [cyan]100 qty per product[/cyan]\n" if add_inventory else ""
-    variants_line = "  Variants:  [cyan]20 families × 5 colors = 100 SKUs[/cyan]\n" if create_variants else ""
+    variants_line = "  Variants:  [cyan]10 families × 5 = 50 SKUs[/cyan]\n" if create_variants else ""
     store_line = f"  Store:     [cyan]{retailer_name}[/cyan]\n" if retailer_name else ""
 
     summary = (
@@ -251,7 +267,7 @@ def show_creation_summary(
         f"{store_line}"
         f"  Domain:    [cyan]{domain}.retail.lightspeed.app[/cyan]\n"
         f"  Vertical:  [cyan]{vertical_name}[/cyan]\n\n"
-        f"  Products:  [cyan]100[/cyan]\n"
+        f"  Products:  [cyan]50[/cyan]\n"
         f"{inventory_line}"
         f"{variants_line}"
         f"  Customers: [cyan]50[/cyan]\n"
@@ -294,7 +310,7 @@ def run_creation(
     if dry_run:
         console.print("\n[bold yellow]DRY RUN - No data will be created[/bold yellow]\n")
 
-        products = list(generate_products(vertical_prefix, count=100, tax_inclusive=tax_inclusive))
+        products = list(generate_products(vertical_prefix, count=50, tax_inclusive=tax_inclusive))
         customers = list(generate_customers(count=50))
 
         console.print("[bold]Sample Products:[/bold]")
@@ -333,8 +349,8 @@ def run_creation(
         console=console,
     ) as progress:
         # Create products first
-        product_task = progress.add_task("Creating products...", total=100)
-        products = generate_products(vertical_prefix, count=100, tax_inclusive=tax_inclusive)
+        product_task = progress.add_task("Creating products...", total=50)
+        products = generate_products(vertical_prefix, count=50, tax_inclusive=tax_inclusive)
 
         for product in products:
             result = client.create_product(product)
@@ -472,13 +488,13 @@ def run_creation(
                 color_id, size_id = attr_result  # size_id is None for non-apparel
                 results["variants"] = []
 
-                variant_task = progress.add_task("Creating variant products...", total=20)
+                variant_task = progress.add_task("Creating variant products...", total=10)
 
                 variants = generate_variant_products(
                     prefix=vertical_prefix,
                     color_attribute_id=color_id,
                     size_attribute_id=size_id,  # None for non-apparel
-                    count=20,
+                    count=10,
                 )
 
                 for variant_data in variants:
@@ -529,7 +545,7 @@ def show_complete(results: dict) -> None:
     if results.get("dry_run"):
         summary = (
             "[bold yellow]Dry run complete![/bold yellow]\n\n"
-            "  Would create: [cyan]100 products, 50 customers[/cyan]\n"
+            "  Would create: [cyan]50 products, 50 customers[/cyan]\n"
             "  No API calls were made."
         )
         console.print(Panel(summary, border_style="yellow"))
@@ -645,7 +661,7 @@ def prompt_main_menu() -> str:
     console.print()
     console.print("[bold]What would you like to do?[/bold]\n")
     console.print("  [1] Generate Demo Data (create random products, customers, sales)")
-    console.print("  [2] Clone Account Data (copy products/customers from another account)")
+    console.print("  [2] Clone Account Data (copy products/customers from another account) [red]DO NOT USE - UNDER DEV[/red]")
     console.print()
     choice = Prompt.ask("Enter your choice", choices=["1", "2"], default="1")
 
@@ -672,22 +688,40 @@ def prompt_clone_options() -> dict[str, bool]:
     """Prompt user to select what to clone.
 
     Returns:
-        Dict with 'products' and 'customers' boolean flags
+        Dict with 'products', 'customers', and 'sales' boolean flags
     """
     console.print()
     console.print("[bold]What would you like to clone?[/bold]\n")
     console.print("[dim]Select one or more options:[/dim]")
 
-    clone_products = Confirm.ask("  Clone products (with inventory)?", default=True)
+    clone_products = Confirm.ask("  Clone products?", default=True)
     clone_customers = Confirm.ask("  Clone customers?", default=True)
+    clone_sales = Confirm.ask("  Clone sales history?", default=False)
 
-    if not clone_products and not clone_customers:
+    if clone_sales and not clone_products:
+        console.print(
+            "\n[yellow]Sales cloning requires products to be cloned first "
+            "(to map product IDs).[/yellow]"
+        )
+        clone_products = Confirm.ask("  Enable product cloning?", default=True)
+        if not clone_products:
+            console.print("[dim]Sales cloning disabled since products won't be cloned.[/dim]")
+            clone_sales = False
+
+    if clone_sales and not clone_customers:
+        console.print(
+            "\n[dim]Note: Sales will be cloned without customer associations. "
+            "Enable customer cloning to preserve customer links on sales.[/dim]"
+        )
+
+    if not clone_products and not clone_customers and not clone_sales:
         console.print("[yellow]You must select at least one option to clone.[/yellow]")
         return prompt_clone_options()
 
     return {
         "products": clone_products,
         "customers": clone_customers,
+        "sales": clone_sales,
     }
 
 
@@ -707,9 +741,11 @@ def show_clone_summary(
 
     items = []
     if options.get("products"):
-        items.append("Products (with inventory)")
+        items.append("Products + Inventory")
     if options.get("customers"):
         items.append("Customers")
+    if options.get("sales"):
+        items.append("Sales")
 
     items_str = ", ".join(items)
 
@@ -719,12 +755,42 @@ def show_clone_summary(
         f"  Destination: [cyan]{dest_name}[/cyan] ({dest_domain})\n\n"
         f"  Cloning:     [cyan]{items_str}[/cyan]\n\n"
         f"  [yellow]Warning: This will create new records in the destination account.[/yellow]\n"
-        f"  [dim]Existing records with duplicate SKUs/emails may fail.[/dim]"
+        f"  [dim]Duplicates (same SKU/email) will be skipped, not overwritten.[/dim]"
     )
     console.print(Panel(summary, border_style="yellow"))
     console.print()
     response = Prompt.ask("Type [bold]CLONE[/bold] to start (or press Enter to cancel)")
     return response.upper() == "CLONE"
+
+
+def _format_error_breakdown(error_counts: dict[str, int]) -> str:
+    """Format error counts by type for display.
+
+    Args:
+        error_counts: Dict mapping error_type -> count
+
+    Returns:
+        Formatted string like "5 duplicates, 2 validation errors"
+    """
+    if not error_counts:
+        return ""
+
+    # Human-readable labels for error types
+    labels = {
+        "duplicate": "duplicates",
+        "validation": "validation errors",
+        "permission": "permission errors",
+        "not_found": "not found",
+        "server": "server errors",
+        "unknown": "unknown errors",
+    }
+
+    parts = []
+    for error_type, count in error_counts.items():
+        label = labels.get(error_type, error_type)
+        parts.append(f"{count} {label}")
+
+    return ", ".join(parts)
 
 
 def show_clone_complete(results: dict[str, Any]) -> None:
@@ -733,15 +799,18 @@ def show_clone_complete(results: dict[str, Any]) -> None:
 
     products_cloned = len(results.get("products", []))
     customers_cloned = len(results.get("customers", []))
+    sales_cloned = len(results.get("sales", []))
     failed_products = results.get("failed_products", [])
     failed_customers = results.get("failed_customers", [])
+    failed_sales = results.get("failed_sales", [])
     inventory_updated = results.get("inventory_updated", 0)
     inventory_failed = results.get("inventory_failed", 0)
-    output_file = results.get("output_file", "clone-results.json")
+    log_file = results.get("log_file", "clone.json")
+    error_summary = results.get("error_summary", {})
 
-    has_failures = failed_products or failed_customers
+    has_failures = failed_products or failed_customers or failed_sales
 
-    # Build summary lines
+    # Build summary lines with error breakdown
     product_line = ""
     if results.get("products") is not None:
         inv_info = ""
@@ -751,63 +820,70 @@ def show_clone_complete(results: dict[str, Any]) -> None:
                 inv_info += f", {inventory_failed} failed"
             inv_info += ")"
         product_line = f"  Products cloned:  [cyan]{products_cloned}[/cyan]{inv_info}\n"
+        if failed_products:
+            breakdown = _format_error_breakdown(error_summary.get("products", {}))
+            product_line += f"  Products failed:  [red]{len(failed_products)}[/red]"
+            if breakdown:
+                product_line += f" [dim]({breakdown})[/dim]"
+            product_line += "\n"
 
     customer_line = ""
     if results.get("customers") is not None:
         customer_line = f"  Customers cloned: [cyan]{customers_cloned}[/cyan]\n"
-
-    failed_line = ""
-    if has_failures:
-        parts = []
-        if failed_products:
-            parts.append(f"{len(failed_products)} products")
         if failed_customers:
-            parts.append(f"{len(failed_customers)} customers")
-        failed_line = f"\n  [red]Failed: {', '.join(parts)}[/red]"
+            breakdown = _format_error_breakdown(error_summary.get("customers", {}))
+            customer_line += f"  Customers failed: [red]{len(failed_customers)}[/red]"
+            if breakdown:
+                customer_line += f" [dim]({breakdown})[/dim]"
+            customer_line += "\n"
+
+    sales_line = ""
+    if results.get("sales") is not None:
+        sales_line = f"  Sales cloned:     [cyan]{sales_cloned}[/cyan]\n"
+        if failed_sales:
+            breakdown = _format_error_breakdown(error_summary.get("sales", {}))
+            sales_line += f"  Sales failed:     [red]{len(failed_sales)}[/red]"
+            if breakdown:
+                sales_line += f" [dim]({breakdown})[/dim]"
+            sales_line += "\n"
 
     border_style = "yellow" if has_failures else "green"
     status = "[bold yellow]Clone complete (with errors)[/bold yellow]" if has_failures else "[bold green]Clone complete![/bold green]"
 
+    source_display = results.get('source_name', results.get('source_domain'))
+    dest_display = results.get('dest_name', results.get('dest_domain'))
+    source_domain = results.get('source_domain', '')
+    dest_domain = results.get('dest_domain', '')
+
+    # Build file path section
+    file_lines = f"  Log file: [cyan]{log_file}[/cyan]"
+
     summary = (
         f"{status}\n\n"
-        f"  Source:           [cyan]{results.get('source_domain')}[/cyan]\n"
-        f"  Destination:      [cyan]{results.get('dest_domain')}[/cyan]\n\n"
+        f"  Source:           [cyan]{source_display}[/cyan] ({source_domain})\n"
+        f"  Destination:      [cyan]{dest_display}[/cyan] ({dest_domain})\n\n"
         f"{product_line}"
-        f"{customer_line}\n"
-        f"  Output file: [cyan]{output_file}[/cyan]{failed_line}"
+        f"{customer_line}"
+        f"{sales_line}\n"
+        f"{file_lines}"
     )
     console.print(Panel(summary, border_style=border_style))
 
-    # Show detailed failure reasons if any
-    if failed_products:
-        console.print("\n[bold red]Failed Products:[/bold red]")
-        for item in failed_products[:10]:  # Limit to first 10
-            console.print(f"  • {item.get('sku', 'N/A')}: {item.get('name', 'N/A')}")
-            console.print(f"    [dim]{item.get('reason', 'Unknown error')}[/dim]")
-        if len(failed_products) > 10:
-            console.print(f"  [dim]... and {len(failed_products) - 10} more[/dim]")
-
-    if failed_customers:
-        console.print("\n[bold red]Failed Customers:[/bold red]")
-        for item in failed_customers[:10]:  # Limit to first 10
-            console.print(f"  • {item.get('name', 'N/A')} <{item.get('email', 'N/A')}>")
-            console.print(f"    [dim]{item.get('reason', 'Unknown error')}[/dim]")
-        if len(failed_customers) > 10:
-            console.print(f"  [dim]... and {len(failed_customers) - 10} more[/dim]")
+    # Show detailed failure info with see log hint
+    if has_failures:
+        console.print("\n[dim]See log file for detailed error information (payloads, responses)[/dim]")
 
 
 def run_clone_wizard(debug: bool = False) -> None:
     """Run the clone account wizard."""
     from xseries_demo.api.client import XSeriesClient
     from xseries_demo.clone import run_clone
-    from xseries_demo.output import write_clone_output_file
 
     # === SOURCE ACCOUNT ===
     console.print("\n[bold cyan]━━━ SOURCE ACCOUNT ━━━[/bold cyan]")
     source_domain = prompt_domain_with_label("Source Account (copy FROM)")
 
-    show_token_instructions(include_sales=False)
-    console.print("[dim]Required scopes: products:read, customers:read[/dim]")
+    show_token_instructions(include_sales=True, read_only=True)
 
     # Validate source credentials
     while True:
@@ -820,14 +896,13 @@ def run_clone_wizard(debug: bool = False) -> None:
             console.print("\n[yellow]Aborted.[/yellow]")
             return
         source_domain = prompt_domain_with_label("Source Account (copy FROM)")
-        show_token_instructions(include_sales=False)
+        show_token_instructions(include_sales=True, read_only=True)
 
     # === DESTINATION ACCOUNT ===
     console.print("\n[bold cyan]━━━ DESTINATION ACCOUNT ━━━[/bold cyan]")
     dest_domain = prompt_domain_with_label("Destination Account (copy TO)")
 
-    show_token_instructions(include_sales=False)
-    console.print("[dim]Required scopes: products:write, customers:write[/dim]")
+    show_token_instructions(include_sales=True, read_only=False)
 
     # Validate destination credentials
     while True:
@@ -840,7 +915,7 @@ def run_clone_wizard(debug: bool = False) -> None:
             console.print("\n[yellow]Aborted.[/yellow]")
             return
         dest_domain = prompt_domain_with_label("Destination Account (copy TO)")
-        show_token_instructions(include_sales=False)
+        show_token_instructions(include_sales=True, read_only=False)
 
     # Check that source and destination are different
     if source_domain.lower() == dest_domain.lower():
@@ -864,14 +939,15 @@ def run_clone_wizard(debug: bool = False) -> None:
                 dest_client=dest_client,
                 clone_products_flag=options["products"],
                 clone_customers_flag=options["customers"],
+                clone_sales_flag=options.get("sales", False),
                 include_inventory=options["products"],  # Include inventory if cloning products
             )
 
-    # Write output file
-    output_file = write_clone_output_file(results)
-    results["output_file"] = output_file
+    # Add store names for display
+    results["source_name"] = source_name
+    results["dest_name"] = dest_name
 
-    # Show completion
+    # Show completion (log_file already in results from run_clone)
     show_clone_complete(results)
 
 
@@ -879,8 +955,16 @@ def run_clone_wizard(debug: bool = False) -> None:
 @click.option("--dry-run", is_flag=True, help="Preview generated data without creating anything")
 @click.option("--debug", is_flag=True, help="Enable debug logging of API requests/responses")
 def main(dry_run: bool, debug: bool) -> None:
-    """X-Series Demo Data Generator - Create demo customers and products."""
+    """X-Series Demo Data Tool - Generate demo data or clone between accounts."""
+    from xseries_demo.output import setup_logging
+
     try:
+        # Set up debug logging if requested
+        if debug:
+            debug_log = setup_logging(debug=True)
+            if debug_log:
+                console.print(f"[dim]Debug log: {debug_log}[/dim]")
+
         show_welcome_banner()
 
         if not dry_run:

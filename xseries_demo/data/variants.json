@@ -37,7 +37,7 @@
         {"name": "Leggings Flex", "base_price": 39.99},
         {"name": "Beanie Thermal", "base_price": 19.99}
       ],
-      "colors": ["Black", "White", "Navy", "Heather Grey", "Burgundy"],
+      "variant_values": ["Black", "White", "Navy", "Heather Grey", "Burgundy"],
       "sizes": ["XS", "S", "M", "L", "XL"]
     },
     "ELE": {
@@ -73,7 +73,7 @@
         {"name": "DigitalPro Stylus Pen Draw", "base_price": 34.99},
         {"name": "ProSound Cable Adapter Hub", "base_price": 19.99}
       ],
-      "colors": ["Space Black", "Silver", "Rose Gold", "Midnight Blue", "Arctic White"],
+      "variant_values": ["Space Black", "Silver", "Rose Gold", "Midnight Blue", "Arctic White"],
       "sizes": ["Standard"]
     },
     "HOM": {
@@ -109,7 +109,7 @@
         {"name": "Crystal Carafe Pour", "base_price": 54.99},
         {"name": "Cotton Placemats Woven", "base_price": 29.99}
       ],
-      "colors": ["Ivory", "Charcoal", "Sage Green", "Blush Pink", "Ocean Blue"],
+      "variant_values": ["Ivory", "Charcoal", "Sage Green", "Blush Pink", "Ocean Blue"],
       "sizes": ["Standard"]
     },
     "BTY": {
@@ -145,7 +145,23 @@
         {"name": "Fresh Face Hair Spray Hold", "base_price": 16.99},
         {"name": "Noble Beauty Nail Polish Lacquer", "base_price": 12.99}
       ],
-      "colors": ["Rose", "Nude", "Berry", "Coral", "Mauve"],
+      "variant_values": ["Rose", "Nude", "Berry", "Coral", "Mauve"],
+      "sizes": ["Standard"]
+    },
+    "LIQ": {
+      "products": [
+        {"name": "Highland Spirit Bourbon", "base_price": 34.99},
+        {"name": "Copper Creek Single Malt", "base_price": 54.99},
+        {"name": "Golden Oak Rye Whiskey", "base_price": 39.99},
+        {"name": "Silver Valley Vodka", "base_price": 24.99},
+        {"name": "Barrel House Gin", "base_price": 29.99},
+        {"name": "Stone Bridge Rum Gold", "base_price": 27.99},
+        {"name": "Iron Horse Tequila Blanco", "base_price": 32.99},
+        {"name": "Red Cedar Tequila Reposado", "base_price": 44.99},
+        {"name": "Blue Ridge Mezcal", "base_price": 49.99},
+        {"name": "River Rock Cognac VS", "base_price": 42.99}
+      ],
+      "variant_values": ["375ml", "750ml", "1L", "1.75L", "50ml"],
       "sizes": ["Standard"]
     }
   }

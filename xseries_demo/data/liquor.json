@@ -1,0 +1,73 @@
+{
+  "products": [
+    "Bourbon Whiskey 750ml",
+    "Single Malt Scotch 750ml",
+    "Rye Whiskey 750ml",
+    "Irish Whiskey 750ml",
+    "Tennessee Whiskey 750ml",
+    "Vodka 750ml",
+    "Vodka 1L",
+    "Gin London Dry 750ml",
+    "Gin Botanical 750ml",
+    "Rum Gold 750ml",
+    "Rum Spiced 750ml",
+    "Rum White 750ml",
+    "Tequila Blanco 750ml",
+    "Tequila Reposado 750ml",
+    "Tequila Anejo 750ml",
+    "Mezcal 750ml",
+    "Cognac VS 750ml",
+    "Brandy 750ml",
+    "Red Wine Cabernet 750ml",
+    "Red Wine Merlot 750ml",
+    "Red Wine Pinot Noir 750ml",
+    "White Wine Chardonnay 750ml",
+    "White Wine Sauvignon Blanc 750ml",
+    "Rosé Wine 750ml",
+    "Champagne Brut 750ml",
+    "Prosecco 750ml",
+    "Aperol 750ml",
+    "Amaretto 750ml",
+    "Irish Cream 750ml",
+    "Coffee Liqueur 750ml",
+    "Triple Sec 750ml",
+    "Vermouth Sweet 750ml",
+    "Vermouth Dry 750ml",
+    "Campari 750ml",
+    "Amaro 750ml"
+  ],
+  "adjectives": [
+    "Premium",
+    "Reserve",
+    "Aged",
+    "Small Batch",
+    "Craft",
+    "Limited",
+    "Single Barrel",
+    "Vintage",
+    "Estate",
+    "Artisan",
+    "Classic",
+    "Select"
+  ],
+  "brands": [
+    "Highland Spirit",
+    "Copper Creek",
+    "Golden Oak",
+    "Silver Valley",
+    "Barrel House",
+    "Stone Bridge",
+    "Iron Horse",
+    "Red Cedar",
+    "Blue Ridge",
+    "River Rock"
+  ],
+  "price_range": {
+    "min": 16.00,
+    "max": 75.00
+  },
+  "supply_margin": {
+    "min": 0.65,
+    "max": 0.78
+  }
+}

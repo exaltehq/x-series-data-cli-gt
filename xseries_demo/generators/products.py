@@ -25,6 +25,7 @@ def load_vertical_data(prefix: str) -> dict:
         "ELE": "electronics.json",
         "HOM": "home.json",
         "BTY": "beauty.json",
+        "LIQ": "liquor.json",
     }
 
     filename = prefix_to_file.get(prefix)
@@ -62,32 +63,52 @@ def generate_supply_price(retail_price: float, margin_min: float, margin_max: fl
     return round(retail_price * margin, 2)
 
 
-def generate_product_name(data: dict) -> str:
-    """Generate a product name from vertical data."""
-    product = random.choice(data["products"])
-    adjective = random.choice(data["adjectives"])
+def generate_product_name(data: dict, used_names: set[str]) -> str:
+    """Generate a unique product name from vertical data.
 
-    # Some verticals have brands, others have materials
-    if "brands" in data:
-        brand = random.choice(data["brands"])
-        return f"{brand} {adjective} {product}"
-    elif "materials" in data:
-        material = random.choice(data["materials"])
-        # Randomly decide format
-        if random.random() > 0.5:
-            return f"{adjective} {material} {product}"
+    Args:
+        data: Vertical data dict with products, adjectives, brands/materials
+        used_names: Set of already used names to ensure uniqueness
+    """
+    max_attempts = 100  # Prevent infinite loop
+
+    for _ in range(max_attempts):
+        product = random.choice(data["products"])
+        adjective = random.choice(data["adjectives"])
+
+        # Some verticals have brands, others have materials
+        if "brands" in data:
+            brand = random.choice(data["brands"])
+            name = f"{brand} {adjective} {product}"
+        elif "materials" in data:
+            material = random.choice(data["materials"])
+            # Randomly decide format
+            if random.random() > 0.5:
+                name = f"{adjective} {material} {product}"
+            else:
+                name = f"{material} {product}"
         else:
-            return f"{material} {product}"
-    else:
-        return f"{adjective} {product}"
+            name = f"{adjective} {product}"
+
+        if name not in used_names:
+            used_names.add(name)
+            return name
+
+    # Fallback: add random suffix if too many collisions
+    name = f"{name} #{random.randint(1000, 9999)}"
+    used_names.add(name)
+    return name
 
 
-def generate_product(prefix: str, used_skus: set[str], tax_inclusive: bool = True) -> dict:
+def generate_product(
+    prefix: str, used_skus: set[str], used_names: set[str], tax_inclusive: bool = True
+) -> dict:
     """Generate a single product payload for X-Series API.
 
     Args:
-        prefix: Vertical prefix (APP, ELE, HOM, BTY)
+        prefix: Vertical prefix (APP, ELE, HOM, BTY, LIQ)
         used_skus: Set of already used SKUs to ensure uniqueness
+        used_names: Set of already used names to ensure uniqueness
         tax_inclusive: If True, use price_including_tax; if False, use price_excluding_tax
     """
     data = load_vertical_data(prefix)
@@ -103,7 +124,7 @@ def generate_product(prefix: str, used_skus: set[str], tax_inclusive: bool = Tru
     price_field = "price_including_tax" if tax_inclusive else "price_excluding_tax"
 
     return {
-        "name": generate_product_name(data),
+        "name": generate_product_name(data, used_names),
         "sku": generate_sku(prefix, used_skus),
         price_field: retail_price,
         "supply_price": supply_price,
@@ -117,11 +138,12 @@ def generate_products(
     """Generate multiple product payloads for the given vertical.
 
     Args:
-        prefix: Vertical prefix (APP, ELE, HOM, BTY)
+        prefix: Vertical prefix (APP, ELE, HOM, BTY, LIQ)
         count: Number of products to generate
         tax_inclusive: If True, use price_including_tax; if False, use price_excluding_tax
     """
     used_skus: set[str] = set()
+    used_names: set[str] = set()
 
     for _ in range(count):
-        yield generate_product(prefix, used_skus, tax_inclusive)
+        yield generate_product(prefix, used_skus, used_names, tax_inclusive)

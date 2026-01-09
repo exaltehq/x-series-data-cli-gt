@@ -1,7 +1,7 @@
 [project]
 name = "xseries-demo"
-version = "0.1.0"
-description = "CLI tool to generate demo customers and products in X-Series retail accounts"
+version = "1.1.0"
+description = "CLI tool to generate demo data or clone data between X-Series retail accounts"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
