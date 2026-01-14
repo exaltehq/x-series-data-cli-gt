@@ -251,7 +251,7 @@ def show_creation_summary(
     console.print()
 
     # Calculate total records
-    total_records = 50 + 50  # products + customers
+    total_records = 50 + 100  # products + customers
     if create_sales:
         total_records += 50
     if create_variants:
@@ -270,7 +270,7 @@ def show_creation_summary(
         f"  Products:  [cyan]50[/cyan]\n"
         f"{inventory_line}"
         f"{variants_line}"
-        f"  Customers: [cyan]50[/cyan]\n"
+        f"  Customers: [cyan]100[/cyan]\n"
         f"{sales_line}\n"
         f"  [bold]Total records: {total_records}[/bold]\n"
         f"  [dim]Mode: LIVE (API writes enabled)[/dim]"
@@ -311,7 +311,7 @@ def run_creation(
         console.print("\n[bold yellow]DRY RUN - No data will be created[/bold yellow]\n")
 
         products = list(generate_products(vertical_prefix, count=50, tax_inclusive=tax_inclusive))
-        customers = list(generate_customers(count=50))
+        customers = list(generate_customers(count=100))
 
         console.print("[bold]Sample Products:[/bold]")
         for p in products[:3]:
@@ -397,8 +397,8 @@ def run_creation(
                 results["outlets_count"] = len(outlets)
 
         # Then create customers
-        customer_task = progress.add_task("Creating customers...", total=50)
-        customers = generate_customers(count=50)
+        customer_task = progress.add_task("Creating customers...", total=100)
+        customers = generate_customers(count=100)
 
         for customer in customers:
             result = client.create_customer(customer)
@@ -545,7 +545,7 @@ def show_complete(results: dict) -> None:
     if results.get("dry_run"):
         summary = (
             "[bold yellow]Dry run complete![/bold yellow]\n\n"
-            "  Would create: [cyan]50 products, 50 customers[/cyan]\n"
+            "  Would create: [cyan]50 products, 100 customers[/cyan]\n"
             "  No API calls were made."
         )
         console.print(Panel(summary, border_style="yellow"))
