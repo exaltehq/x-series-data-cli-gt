@@ -150,18 +150,28 @@
     },
     "LIQ": {
       "products": [
-        {"name": "Highland Spirit Bourbon", "base_price": 34.99},
-        {"name": "Copper Creek Single Malt", "base_price": 54.99},
-        {"name": "Golden Oak Rye Whiskey", "base_price": 39.99},
-        {"name": "Silver Valley Vodka", "base_price": 24.99},
-        {"name": "Barrel House Gin", "base_price": 29.99},
-        {"name": "Stone Bridge Rum Gold", "base_price": 27.99},
-        {"name": "Iron Horse Tequila Blanco", "base_price": 32.99},
-        {"name": "Red Cedar Tequila Reposado", "base_price": 44.99},
-        {"name": "Blue Ridge Mezcal", "base_price": 49.99},
-        {"name": "River Rock Cognac VS", "base_price": 42.99}
+        {"name": "Reserve Collection Bourbon", "base_price": 34.99},
+        {"name": "Master Distiller Single Malt", "base_price": 54.99},
+        {"name": "Heritage Rye Whiskey", "base_price": 39.99},
+        {"name": "Crystal Clear Vodka Premium", "base_price": 24.99},
+        {"name": "Botanical Garden Gin", "base_price": 29.99},
+        {"name": "Caribbean Gold Rum", "base_price": 27.99},
+        {"name": "Agave Fields Tequila Blanco", "base_price": 32.99},
+        {"name": "Oaxaca Valley Mezcal", "base_price": 44.99},
+        {"name": "French Estate Cognac VS", "base_price": 49.99},
+        {"name": "Scottish Highlands Scotch", "base_price": 42.99},
+        {"name": "Irish Meadow Whiskey", "base_price": 36.99},
+        {"name": "Nordic Frost Aquavit", "base_price": 31.99},
+        {"name": "Aperitivo Italiano Amaro", "base_price": 28.99},
+        {"name": "Cask Strength Bourbon Select", "base_price": 59.99},
+        {"name": "Island Spiced Rum", "base_price": 25.99},
+        {"name": "London Dry Gin Classic", "base_price": 33.99},
+        {"name": "Reposado Agave Tequila", "base_price": 41.99},
+        {"name": "VSOP Grand Cognac", "base_price": 64.99},
+        {"name": "Small Batch Rye Select", "base_price": 47.99},
+        {"name": "Triple Distilled Vodka", "base_price": 29.99}
       ],
-      "variant_values": ["375ml", "750ml", "1L", "1.75L", "50ml"],
+      "variant_values": ["375ml", "750ml", "1L", "1.75L"],
       "sizes": ["Standard"]
     }
   }

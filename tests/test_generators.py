@@ -115,8 +115,8 @@ class TestLiquorVariants:
             assert "base_price" in variant
             assert "payload" in variant
             assert "variants" in variant["payload"]
-            # Each product should have 5 size variants
-            assert len(variant["payload"]["variants"]) == 5
+            # Each product should have 4 bottle size variants (375ml, 750ml, 1L, 1.75L)
+            assert len(variant["payload"]["variants"]) == 4
 
     def test_liquor_variant_skus_contain_size(self):
         """Test that liquor variant SKUs contain size abbreviations."""
@@ -142,30 +142,32 @@ class TestLiquorVariants:
 
         for product in liq["products"]:
             price = product["base_price"]
-            assert 20 <= price <= 60, f"Price {price} seems unrealistic for liquor"
+            assert 20 <= price <= 70, f"Price {price} seems unrealistic for liquor"
 
 
 class TestVariantAttributeLogic:
     """Tests for variant attribute creation logic."""
 
-    def test_liquor_uses_size_attribute_name(self):
-        """Test that LIQ vertical is configured to use Size attribute."""
+    def test_liquor_uses_bottle_size_attribute(self):
+        """Test that LIQ vertical is configured to use Bottle Size attribute."""
         from xseries_demo.generators.variants import get_or_create_variant_attributes
 
         # Verify the function exists and has LIQ-specific logic
         import inspect
         source = inspect.getsource(get_or_create_variant_attributes)
 
-        # Check that LIQ prefix triggers Size attribute
+        # Check that LIQ prefix triggers Bottle Size attribute
         assert 'prefix == "LIQ"' in source
-        assert 'primary_attr_name = "Size"' in source
+        assert '"Bottle Size"' in source
 
     def test_all_verticals_have_variant_values(self):
         """Test that all verticals have variant_values field."""
         data = load_variant_data()
 
+        expected_counts = {"APP": 5, "ELE": 5, "HOM": 5, "BTY": 5, "LIQ": 4}
         for prefix in ["APP", "ELE", "HOM", "BTY", "LIQ"]:
             assert prefix in data["verticals"], f"Missing vertical: {prefix}"
             vertical = data["verticals"][prefix]
             assert "variant_values" in vertical, f"Missing variant_values in {prefix}"
-            assert len(vertical["variant_values"]) == 5, f"Expected 5 variant values in {prefix}"
+            expected = expected_counts[prefix]
+            assert len(vertical["variant_values"]) == expected, f"Expected {expected} variant values in {prefix}"

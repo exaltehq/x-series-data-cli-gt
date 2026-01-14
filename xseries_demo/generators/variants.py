@@ -118,7 +118,7 @@ def get_or_create_variant_attributes(
 
     Returns:
         (color_id, size_id) for Apparel
-        (size_id, None) for Liquor (bottle sizes)
+        (bottle_size_id, None) for Liquor (bottle sizes)
         (color_id, None) for other verticals
         None on failure
     """
@@ -128,9 +128,7 @@ def get_or_create_variant_attributes(
         return None
 
     # Determine attribute names based on vertical
-    if prefix == "LIQ":
-        primary_attr_name = "Size"
-    elif prefix == "BTY":
+    if prefix == "BTY":
         primary_attr_name = "Shade"
     else:
         primary_attr_name = "Color"
@@ -138,6 +136,7 @@ def get_or_create_variant_attributes(
 
     color_id = None
     size_id = None
+    bottle_size_id = None
 
     # Look for existing attributes
     for attr in attributes:
@@ -146,16 +145,18 @@ def get_or_create_variant_attributes(
             color_id = attr["id"]
         elif name == "size":
             size_id = attr["id"]
+        elif name == "bottle size":
+            bottle_size_id = attr["id"]
 
-    # For Liquor, use Size as the primary attribute
+    # For Liquor, use "Bottle Size" as a separate attribute
     if prefix == "LIQ":
-        if not size_id:
-            result = client.create_variant_attribute("Size")
+        if not bottle_size_id:
+            result = client.create_variant_attribute("Bottle Size")
             if result:
-                size_id = result["id"]
+                bottle_size_id = result["id"]
             else:
                 return None
-        return size_id, None
+        return bottle_size_id, None
 
     # Create color/shade attribute if missing
     if not color_id:
