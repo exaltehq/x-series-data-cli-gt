@@ -251,7 +251,7 @@ def show_creation_summary(
     console.print()
 
     # Calculate total records
-    total_records = 50 + 100  # products + customers
+    total_records = 100 + 100  # products + customers
     if create_sales:
         total_records += 50
     if create_variants:
@@ -267,7 +267,7 @@ def show_creation_summary(
         f"{store_line}"
         f"  Domain:    [cyan]{domain}.retail.lightspeed.app[/cyan]\n"
         f"  Vertical:  [cyan]{vertical_name}[/cyan]\n\n"
-        f"  Products:  [cyan]50[/cyan]\n"
+        f"  Products:  [cyan]100[/cyan]\n"
         f"{inventory_line}"
         f"{variants_line}"
         f"  Customers: [cyan]100[/cyan]\n"
@@ -310,7 +310,7 @@ def run_creation(
     if dry_run:
         console.print("\n[bold yellow]DRY RUN - No data will be created[/bold yellow]\n")
 
-        products = list(generate_products(vertical_prefix, count=50, tax_inclusive=tax_inclusive))
+        products = list(generate_products(vertical_prefix, count=100, tax_inclusive=tax_inclusive))
         customers = list(generate_customers(count=100))
 
         console.print("[bold]Sample Products:[/bold]")
@@ -349,8 +349,8 @@ def run_creation(
         console=console,
     ) as progress:
         # Create products first
-        product_task = progress.add_task("Creating products...", total=50)
-        products = generate_products(vertical_prefix, count=50, tax_inclusive=tax_inclusive)
+        product_task = progress.add_task("Creating products...", total=100)
+        products = generate_products(vertical_prefix, count=100, tax_inclusive=tax_inclusive)
 
         for product in products:
             result = client.create_product(product)
@@ -545,7 +545,7 @@ def show_complete(results: dict) -> None:
     if results.get("dry_run"):
         summary = (
             "[bold yellow]Dry run complete![/bold yellow]\n\n"
-            "  Would create: [cyan]50 products, 100 customers[/cyan]\n"
+            "  Would create: [cyan]100 products, 100 customers[/cyan]\n"
             "  No API calls were made."
         )
         console.print(Panel(summary, border_style="yellow"))
