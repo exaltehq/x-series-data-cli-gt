@@ -18,10 +18,10 @@ xseries-demo              # Interactive mode
 xseries-demo --dry-run    # Preview without creating data
 xseries-demo --debug      # Show API requests/responses
 
-# Run tests
+# Run tests (when tests exist)
 pytest
-pytest tests/test_generators.py -v        # Run single test file
-pytest -k "test_customer"                  # Run tests matching pattern
+pytest tests/test_file.py -v              # Run single test file
+pytest -k "test_customer"                 # Run tests matching pattern
 
 # Type checking
 mypy xseries_demo/
@@ -33,7 +33,7 @@ ruff check xseries_demo/
 ## Architecture
 
 ### Data Flow
-1. `cli.py` orchestrates the interactive wizard, collecting domain/token/options
+1. `cli.py` orchestrates the interactive wizard with nested loops (outer: store selection, inner: vertical import)
 2. Generators (`generators/*.py`) produce Faker-based payloads without API knowledge
 3. `api/client.py` handles all HTTP communication with rate limiting and retries
 4. `output.py` writes results to timestamped JSON files
@@ -50,7 +50,7 @@ Each generator module exports a `generate_*` function that yields dicts:
 ```python
 def generate_products(prefix: str, count: int, tax_inclusive: bool) -> Generator[dict, None, None]
 def generate_customers(count: int) -> Generator[dict, None, None]
-def generate_sales(products, customers, user_id, register_id, ...) -> Iterator[dict]
+def generate_sales(products, customers, user_id, register_id, payment_type_id, tax_id, count) -> Iterator[dict]
 def generate_variant_products(prefix, color_attribute_id, size_attribute_id, count) -> Iterator[dict]
 ```
 
@@ -85,4 +85,4 @@ Copies products and customers from one X-Series account to another:
 ## Key Documents
 
 - `SPEC.md` - Complete functional specification with API schemas and implementation plan
-- `openapi/legacy-api-v2-0.yml` - X-Series API specification
+- `openapi/` - X-Series API specifications (v0.9 for sales, v2.0 for most operations, v2.1 for inventory/price updates)
